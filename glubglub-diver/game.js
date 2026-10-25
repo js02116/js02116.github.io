@@ -159,6 +159,38 @@
     click: () => tone(600, 700, 0.06, 'triangle', 0.1),
   };
 
+  // ---------- 배경음악 (music_data.js 에 내장, 없으면 무음) ----------
+  // 게임 중엔 크게, 일시정지 중엔 작게, 그 밖에는 꺼짐. 새 판을 시작하면 처음부터
+  const BGM = 'bgm_fight', BGM_VOL = { play: 0.32, pause: 0.08 };
+  let bgmBuf = null, bgmSrc = null, bgmGain = null, bgmLoading = false, bgmVol = 0;
+  function bgmLoad() {
+    const url = window.GGD_MUSIC?.[BGM];
+    if (!actx || !url || bgmBuf || bgmLoading) return;
+    bgmLoading = true;
+    const bin = atob(url.slice(url.indexOf(',') + 1));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    actx.decodeAudioData(bytes.buffer).then(b => { bgmBuf = b; }, e => console.warn('배경음악 읽기 실패:', e));
+  }
+  function bgmRestart() {
+    if (bgmSrc) { bgmSrc.stop(); bgmSrc = null; }
+  }
+  function bgmUpdate() {
+    if (!actx) return;
+    bgmLoad();
+    if (!bgmBuf) return;
+    if (!bgmGain) { bgmGain = actx.createGain(); bgmGain.gain.value = 0; bgmGain.connect(actx.destination); }
+    const vol = muted ? 0 : BGM_VOL[state] || 0;
+    if (!bgmSrc && vol > 0) {
+      bgmSrc = actx.createBufferSource();
+      bgmSrc.buffer = bgmBuf;
+      bgmSrc.loop = true;
+      bgmSrc.connect(bgmGain);
+      bgmSrc.start();
+    }
+    if (vol !== bgmVol) { bgmVol = vol; bgmGain.gain.setTargetAtTime(vol, actx.currentTime, 0.15); }   // 부드럽게 커지고 작아짐
+  }
+
   // ---------- 유틸 ----------
   const rand = (a, b) => a + Math.random() * (b - a);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -368,6 +400,7 @@
   let fishT = 0;
 
   function startGame() {
+    bgmRestart();
     G = {
       scroll: 0, speed: 80, depth: 0, bonus: 0, oxygen: 100, hitT: 0, lastHit: false,
       platforms: [], items: [], bubbles: [], jellies: [], fx: [], pops: [], sparks: [], rings: [], signs: [],
@@ -975,6 +1008,7 @@
     shake = Math.max(0, shake - dt);
     if (state !== 'load') updateAmbient(state === 'pause' ? 0 : dt);
     if (state === 'play' || state === 'dying') update(dt);
+    bgmUpdate();
     render();
     requestAnimationFrame(frame);
   }
