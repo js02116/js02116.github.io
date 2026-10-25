@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0c1f2c">
+  <!-- 휴대폰 "홈 화면에 추가"로 열면 주소창 없이 전체 화면 -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Glub Glub">
+  <title>Glub Glub Diver</title>
+  <meta name="description" content="올라오는 발판을 밟으며 바다 아래로 내려가는 캐주얼 게임. 설치 없이 바로 플레이!">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Glub Glub Diver">
+  <meta property="og:description" content="설치 없이 브라우저에서 바로 플레이하는 심해 다이빙 게임">
+  <meta property="og:image" content="https://js02116.github.io/images/ggd_logo.png">
+  <meta property="og:url" content="https://js02116.github.io/glubglub-diver/">
+  <meta name="theme-color" content="#0c1f2c">
+  <link rel="icon" type="image/png" href="../images/favicon.png">
+  <style>
+    html, body {
+      margin: 0; height: 100%; background: #0c1f2c; overflow: hidden;
+      overscroll-behavior: none;            /* 당겨서 새로고침·튕김 막기 */
+      touch-action: none;                   /* 두 번 탭 확대·핀치 확대·스크롤 막기 */
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none;          /* iOS 길게 누르기 메뉴 */
+      -webkit-tap-highlight-color: transparent;
+    }
+    body { display: flex; align-items: center; justify-content: center; }
+    canvas { display: block; touch-action: none; box-shadow: 0 0 40px #000a; }
+    /* 휴대폰을 가로로 눕혔을 때 (game.js 의 LANDSCAPE 와 같은 조건) */
+    #rotate {
+      display: none; position: fixed; inset: 0; z-index: 1;
+      align-items: center; justify-content: center; text-align: center;
+      background: #0c1f2c; color: #f3e6c4;
+      font: 900 22px "Arial Rounded MT Bold", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    }
+    @media (orientation: landscape) and (pointer: coarse) and (max-height: 600px) {
+      #rotate { display: flex; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="rotate">휴대폰을 세로로 돌려주세요 📱</div>
+  <script src="manifest.js"></script>
+  <script src="assets_data.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

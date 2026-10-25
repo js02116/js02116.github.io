@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chaddy Company</title>
+  <meta name="description" content="Chaddy Company(챠디 컴퍼니) — 작고 즐거운 게임과 앱을 만듭니다.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Chaddy Company">
+  <meta property="og:description" content="작고 즐거운 게임과 앱을 만듭니다. 지금 Glub Glub Diver를 브라우저에서 바로 플레이해 보세요.">
+  <meta property="og:image" content="https://js02116.github.io/images/ggd_logo.png">
+  <meta property="og:url" content="https://js02116.github.io/">
+  <link rel="icon" type="image/png" href="images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #f4ead5;
+      --paper: #fbf5e8;
+      --ink: #1d2f3a;
+      --ink-soft: #4a5d68;
+      --teal: #2f7f8f;
+      --teal-deep: #0c1f2c;
+      --red: #c8442f;
+      --line: #1d2f3a1f;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Noto Sans KR', system-ui, sans-serif;
+      line-height: 1.6;
+      word-break: keep-all;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+
+    /* 상단 바 */
+    header { padding: 22px 0; }
+    header .wrap { display: flex; align-items: center; justify-content: space-between; }
+    .brand { font-family: 'Jua', sans-serif; font-size: 26px; text-decoration: none; letter-spacing: .5px; }
+    .brand span { color: var(--red); }
+    nav a { margin-left: 22px; text-decoration: none; font-weight: 500; color: var(--ink-soft); }
+    nav a:hover { color: var(--ink); }
+
+    /* 소개 */
+    .hero { padding-block: 56px 72px; }
+    .hero h1 {
+      font-family: 'Jua', sans-serif; font-weight: 400;
+      font-size: clamp(38px, 7vw, 68px); line-height: 1.15; margin: 0 0 18px;
+    }
+    .hero h1 em { font-style: normal; color: var(--teal); }
+    .hero p { font-size: 18px; color: var(--ink-soft); max-width: 520px; margin: 0; }
+
+    /* 게임 소개 카드 */
+    .section-title { font-family: 'Jua', sans-serif; font-weight: 400; font-size: 28px; margin: 0 0 20px; }
+    .feature {
+      display: grid; grid-template-columns: 1fr 300px; gap: 40px; align-items: center;
+      background: var(--teal-deep); color: #eaf4f4;
+      border-radius: 28px; padding: 44px; overflow: hidden; position: relative;
+    }
+    .feature::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 15% 0%, #2f7f8f88, transparent 55%);
+      pointer-events: none;
+    }
+    .feature > * { position: relative; }
+    .feature .logo { width: min(320px, 100%); display: block; margin: 0 0 16px -6px; }
+    .feature p { color: #b9d2d6; margin: 0 0 8px; max-width: 440px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 28px; padding: 0; list-style: none; }
+    .tags li { font-size: 13px; padding: 4px 12px; border-radius: 99px; background: #ffffff14; color: #d4e6e8; }
+    .play {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--red); color: #fff; text-decoration: none;
+      font-family: 'Jua', sans-serif; font-size: 22px;
+      padding: 14px 30px; border-radius: 99px;
+      box-shadow: 0 6px 0 #8e2b1c; transition: transform .1s, box-shadow .1s;
+    }
+    .play:hover { transform: translateY(2px); box-shadow: 0 4px 0 #8e2b1c; }
+    .play:active { transform: translateY(6px); box-shadow: 0 0 0 #8e2b1c; }
+    .hint { font-size: 13px; color: #8fb0b5; margin-top: 18px; }
+    .shot {
+      width: 100%; border-radius: 18px; display: block;
+      box-shadow: 0 20px 50px #0008; border: 4px solid #f4ead5;
+      transform: rotate(2deg);
+    }
+
+    /* 조작 안내 */
+    .how { padding-block: 72px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .how div { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 24px; }
+    .how h3 { font-family: 'Jua', sans-serif; font-weight: 400; font-size: 20px; margin: 0 0 6px; }
+    .how p { margin: 0; color: var(--ink-soft); font-size: 15px; }
+
+    /* 회사 소개 */
+    .about { padding-block: 64px 80px; }
+    .about p { max-width: 620px; color: var(--ink-soft); font-size: 17px; margin: 0; }
+
+    footer { border-top: 1px solid var(--line); padding: 28px 0 40px; font-size: 14px; color: var(--ink-soft); }
+    footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+    @media (max-width: 760px) {
+      header { padding: 16px 0; }
+      nav a { margin-left: 14px; font-size: 15px; }
+      .hero { padding-block: 32px 44px; }
+      .hero p { font-size: 16px; }
+      .feature { grid-template-columns: 1fr; padding: 28px 22px; gap: 28px; border-radius: 22px; }
+      .feature .shot { max-width: 240px; margin: 0 auto; }
+      .play { width: 100%; justify-content: center; }
+      .how { grid-template-columns: 1fr; padding-top: 48px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <a class="brand" href="./">Chaddy<span>.</span>Company</a>
+      <nav>
+        <a href="#games">게임</a>
+        <a href="#about">소개</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero wrap">
+      <h1>작고 즐거운 것들을<br><em>만드는</em> 곳</h1>
+      <p>Chaddy Company는 짧게 즐기고 오래 생각나는 게임과 앱을 만듭니다. 설치 없이, 지금 바로 플레이해 보세요.</p>
+    </section>
+
+    <section id="games" class="wrap">
+      <h2 class="section-title">게임</h2>
+      <article class="feature">
+        <div>
+          <img class="logo" src="images/ggd_logo.png" alt="Glub Glub Diver">
+          <p>올라오는 발판을 밟으며 바다 아래로, 더 깊이 내려가세요.</p>
+          <p>산소는 단 하나뿐인 생명. 떠오르는 O₂ 방울을 모으고, 성게와 해파리를 피해 최고 깊이에 도전하세요.</p>
+          <ul class="tags">
+            <li>캐주얼</li>
+            <li>세로형</li>
+            <li>PC · 모바일</li>
+            <li>무료</li>
+          </ul>
+          <a class="play" href="glubglub-diver/">▶ 지금 플레이</a>
+          <div class="hint">별도 설치 없이 Chrome · Safari · Edge에서 바로 실행돼요.</div>
+        </div>
+        <img class="shot" src="images/ggd_concept.jpg" alt="Glub Glub Diver 게임 화면">
+      </article>
+
+      <div class="how">
+        <div>
+          <h3>← → 이동</h3>
+          <p>키보드 방향키나 A·D, 휴대폰에선 화면 왼쪽·오른쪽을 누르고 있으면 돼요.</p>
+        </div>
+        <div>
+          <h3>산소를 지켜요</h3>
+          <p>산소는 계속 줄어요. 하늘색 O₂ 방울과 산소탱크로 채우세요.</p>
+        </div>
+        <div>
+          <h3>더 깊이</h3>
+          <p>깊이와 보물이 곧 점수. 최고 기록은 내 브라우저에 저장돼요.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="about wrap">
+      <h2 class="section-title">Chaddy Company</h2>
+      <p>모바일 앱과 게임을 만드는 작은 스튜디오입니다. 첫 작품 Glub Glub Diver를 시작으로, 새로운 게임과 앱을 이곳에 하나씩 올려 둘게요.</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© 2026 Chaddy Company</span>
+      <span>Made with 🫧</span>
+    </div>
+  </footer>
+</body>
+</html>
