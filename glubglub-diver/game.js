@@ -160,35 +160,52 @@
   };
 
   // ---------- 배경음악 (music_data.js 에 내장, 없으면 무음) ----------
-  // 게임 중엔 크게, 일시정지 중엔 작게, 그 밖에는 꺼짐. 새 판을 시작하면 처음부터
-  const BGM = 'bgm_fight', BGM_VOL = { play: 0.32, pause: 0.08 };
-  let bgmBuf = null, bgmSrc = null, bgmGain = null, bgmLoading = false, bgmVol = 0;
-  function bgmLoad() {
-    const url = window.GGD_MUSIC?.[BGM];
-    if (!actx || !url || bgmBuf || bgmLoading) return;
-    bgmLoading = true;
+  // 타이틀·게임오버 화면엔 bgm_title, 게임 중엔 bgm_fight 를 크게, 일시정지 중엔 작게, 그 밖에는 꺼짐.
+  // 새 판을 시작하면 게임 음악은 처음부터
+  const BGM_VOL = {
+    bgm_title: { title: 0.3, over: 0.3 },
+    bgm_fight: { play: 0.32, pause: 0.08 },
+  };
+  const bgm = {};   // 이름 -> { buf, src, gain, loading, vol }
+  for (const name in BGM_VOL) bgm[name] = { buf: null, src: null, gain: null, loading: false, vol: 0 };
+  function bgmLoad(name) {
+    const m = bgm[name], url = window.GGD_MUSIC?.[name];
+    if (!url || m.buf || m.loading) return;
+    m.loading = true;
+    // fetch(data:)는 파일로 직접 열었을 때(file://) 막히는 브라우저가 있어서 atob 로 직접 품
     const bin = atob(url.slice(url.indexOf(',') + 1));
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    actx.decodeAudioData(bytes.buffer).then(b => { bgmBuf = b; }, e => console.warn('배경음악 읽기 실패:', e));
+    actx.decodeAudioData(bytes.buffer).then(b => { m.buf = b; }, e => console.warn('배경음악 읽기 실패:', name, e));
+  }
+  // 소리는 첫 터치 뒤에야 나지만, 음악 풀기(디코딩)는 미리 해 둬야 누르자마자 바로 나옴
+  function bgmPreload() {
+    try {
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      for (const name in bgm) bgmLoad(name);
+    } catch (e) { /* 소리 없이 진행 */ }
   }
   function bgmRestart() {
-    if (bgmSrc) { bgmSrc.stop(); bgmSrc = null; }
+    const m = bgm.bgm_fight;
+    if (m.src) { m.src.stop(); m.src = null; }
   }
   function bgmUpdate() {
     if (!actx) return;
-    bgmLoad();
-    if (!bgmBuf) return;
-    if (!bgmGain) { bgmGain = actx.createGain(); bgmGain.gain.value = 0; bgmGain.connect(actx.destination); }
-    const vol = muted ? 0 : BGM_VOL[state] || 0;
-    if (!bgmSrc && vol > 0) {
-      bgmSrc = actx.createBufferSource();
-      bgmSrc.buffer = bgmBuf;
-      bgmSrc.loop = true;
-      bgmSrc.connect(bgmGain);
-      bgmSrc.start();
+    for (const name in bgm) {
+      const m = bgm[name];
+      bgmLoad(name);
+      if (!m.buf) continue;
+      if (!m.gain) { m.gain = actx.createGain(); m.gain.gain.value = 0; m.gain.connect(actx.destination); }
+      const vol = muted ? 0 : BGM_VOL[name][state] || 0;
+      if (!m.src && vol > 0) {
+        m.src = actx.createBufferSource();
+        m.src.buffer = m.buf;
+        m.src.loop = true;
+        m.src.connect(m.gain);
+        m.src.start();
+      }
+      if (vol !== m.vol) { m.vol = vol; m.gain.gain.setTargetAtTime(vol, actx.currentTime, 0.15); }   // 부드럽게 커지고 작아짐
     }
-    if (vol !== bgmVol) { bgmVol = vol; bgmGain.gain.setTargetAtTime(vol, actx.currentTime, 0.15); }   // 부드럽게 커지고 작아짐
   }
 
   // ---------- 유틸 ----------
@@ -264,6 +281,15 @@
   document.addEventListener('visibilitychange', () => {
     touches.clear();
     if (document.hidden && state === 'play') state = 'pause';
+  });
+
+  // 안드로이드 뒤로가기: 플레이 중이면 일시정지, 일시정지면 이어하기, 그 외 화면에서는 앱을 내림
+  const CapApp = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.App;
+  if (CapApp) CapApp.addListener('backButton', () => {
+    touches.clear();
+    if (state === 'play') state = 'pause';
+    else if (state === 'pause') state = 'play';
+    else CapApp.minimizeApp();
   });
 
   // ---------- 버튼 ----------
@@ -821,19 +847,33 @@
   }
 
   function drawHud() {
-    spr('panel_score', 112, 52);
-    spr('panel_depth', W - 112, 52);
-    text('SCORE', 112, 34, 17, '#3b2414');
-    text('DEPTH', W - 112, 34, 17, '#3b2414');
-    number(score(), 112, 64, 0.78);
-    number(Math.floor(G.depth), W - 112, 64, 0.78, 'm');
+    // 패널·게이지 모두 같은 높이(HY)에 맞추고, 화면 위 끝과 게이지에 닿지 않게 살짝 줄임
+    const HY = 64, PX = 112, PK = 0.9;
+    // 패널은 세로로 조금 늘려 글자·숫자가 테두리에 붙지 않게 하고, 두 줄 묶음을 패널 안쪽 가운데에 둠
+    spr('panel_score', PX, HY, { k: PK, sy: 1.15 });
+    spr('panel_depth', W - PX, HY, { k: PK, sy: 1.15 });
+    text('SCORE', PX, HY - 12, 14, '#3b2414');
+    text('DEPTH', W - PX, HY - 12, 14, '#3b2414');
+    number(score(), PX, HY + 8, 0.64);
+    number(Math.floor(G.depth), W - PX, HY + 8, 0.64, 'm');
 
-    // 산소 게이지: 가득=왼쪽(파랑), 바닥=오른쪽(빨강)
-    const gx = W / 2 + (G.hitT > 0 ? Math.sin(t * 70) * 4 * G.hitT / 0.5 : 0), gy = 56;
-    spr('oxygen_gauge', gx, gy, G.hitT > 0 ? { glow: 'rgba(255, 60, 40, 0.9)', blur: 18 }
-      : G.gainT > 0 ? { glow: `rgba(120, 230, 255, ${G.gainT / 0.5})`, blur: 18 } : {});
-    // ±1.95rad = 파랑/빨강 구역 맨 아래 끝 (게이지 이미지 기준 측정값)
-    const ang = -1.95 + (1 - G.oxygen / 100) * 3.9;
+    // 산소 게이지: 바닥=왼쪽(빨강), 가득=오른쪽(파랑)
+    // 게이지 그림은 파랑이 왼쪽이라 좌우로 뒤집어 그리고, 'OXYGEN' 글자가 있는 윗부분만 원래대로 다시 그림
+    const gx = W / 2 + (G.hitT > 0 ? Math.sin(t * 70) * 4 * G.hitT / 0.5 : 0), gy = HY;
+    const glow = G.hitT > 0 ? { glow: 'rgba(255, 60, 40, 0.9)', blur: 18 }
+      : G.gainT > 0 ? { glow: `rgba(120, 230, 255, ${G.gainT / 0.5})`, blur: 18 } : {};
+    const gs = SPR.oxygen_gauge;
+    spr('oxygen_gauge', gx, gy, { ...glow, flip: true });
+    if (gs) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(gx - gs.w / 2, gy - gs.h / 2, gs.w, gs.h * 0.33);   // 글자 영역 (이미지 위쪽 1/3)
+      ctx.clip();
+      spr('oxygen_gauge', gx, gy);
+      ctx.restore();
+    }
+    // ±1.95rad = 빨강/파랑 구역 맨 아래 끝 (게이지 이미지 기준 측정값)
+    const ang = -1.95 + (G.oxygen / 100) * 3.9;
     spr('oxygen_needle', gx, gy + 12, { ax: 0.5, ay: 0.83, rot: ang, k: 0.72 });
 
     if (G.oxygen < 25 && state === 'play') {
@@ -1016,5 +1056,8 @@
   load().then(() => {
     for (const n of FAR) makeFar(n);
     state = 'title';
+    bgmPreload();
+    // 앱(WebView)에서는 터치 없이도 소리가 나서 타이틀 음악을 바로 틀 수 있음. 브라우저는 첫 터치 후에 시작
+    if (window.Capacitor?.isNativePlatform?.()) audioInit();
   });
 })();

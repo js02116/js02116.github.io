@@ -38,9 +38,26 @@
     @media (orientation: landscape) and (pointer: coarse) and (max-height: 600px) {
       #rotate { display: flex; }
     }
+    /* 시작할 때 잠깐 보이는 회사 로고 스플래시 */
+    #splash {
+      display: none; position: fixed; inset: 0; z-index: 10;
+      align-items: center; justify-content: center;
+      background: #F0EFEB; transition: opacity .4s;
+    }
+    #splash img { width: min(60vw, 360px); }
+    .native #splash { display: flex; }
   </style>
 </head>
 <body>
+  <div id="splash"><img src="splash_logo.png" alt="chaddy company"></div>
+  <script>
+    document.documentElement.classList.add('native');
+    setTimeout(function () {
+      var s = document.getElementById('splash');
+      s.style.opacity = 0;
+      setTimeout(function () { s.remove(); }, 400);
+    }, 1800);
+  </script>
   <canvas id="game"></canvas>
   <div id="rotate">휴대폰을 세로로 돌려주세요 📱</div>
   <script src="manifest.js"></script>
